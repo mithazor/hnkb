@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Switch {
+  id            String      @id @default(cuid())
+  name          String
+  brand         String
+  type          SwitchType
+  actuation     Float       // in mm
+  force         Float       // in grams
+  travel        Float       // in mm
+  soundProfile  SoundProfile
+  tactility     Tactility
+  price         Float?
+  availability  Boolean     @default(true)
+  imageUrl      String?
+  soundUrl      String?
+  description   String?
+  releaseDate   DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  reviews       Review[]
+  favorites     UserFavorite[]
+  
+  @@map("switches")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int      // 1-5
+  comment   String?
+  userId    String
+  switchId  String
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  switch    Switch   @relation(fields: [switchId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, switchId])
+  @@map("reviews")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  image         String?
+  createdAt     DateTime  @default(now())
+  
+  reviews       Review[]
+  favorites     UserFavorite[]
+  
+  @@map("users")
+}
+
+model UserFavorite {
+  id       String @id @default(cuid())
+  userId   String
+  switchId String
+  
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  switch   Switch @relation(fields: [switchId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, switchId])
+  @@map("user_favorites")
+}
+
+enum SwitchType {
+  LINEAR
+  TACTILE
+  CLICKY
+  SILENT
+}
+
+enum SoundProfile {
+  QUIET
+  MODERATE
+  LOUD
+  THOCKY
+  CLACKY
+  CREAMY
+}
+
+enum Tactility {
+  NONE
+  LIGHT
+  MEDIUM
+  HEAVY
+}
